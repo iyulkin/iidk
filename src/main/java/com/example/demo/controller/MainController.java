@@ -3,16 +3,12 @@ package com.example.demo.controller;
 import com.example.demo.jna.IidkClientLibrary;
 import com.example.demo.jna.MessageCallback;
 import com.sun.jna.Memory;
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -42,7 +38,7 @@ public class MainController {
 
     @PostMapping("/message/send")
     public ResponseEntity<String> sendMsg(@RequestBody(required = false) String msg) {
-        if(Objects.isNull(clientId)) {
+        if (Objects.isNull(clientId)) {
             return ResponseEntity.badRequest().body("Not connected. Need to connect.");
         }
         msg = Objects.isNull(msg) ? "CORE||GET_CONFIG|objtype<CAM>,objid<1>" : msg;
@@ -52,7 +48,7 @@ public class MainController {
 
     @PostMapping("/disconnect")
     public ResponseEntity<String> disconnect() {
-        if(!Objects.isNull(clientId)) {
+        if (!Objects.isNull(clientId)) {
             iidkClientLibrary.Disconnect(clientId);
         }
         return ResponseEntity.ok("Disconnected");
