@@ -5,8 +5,14 @@ import com.example.demo.jna.MessageCallback;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -17,29 +23,38 @@ public class MainController {
     private final MessageCallback callback = new MessageCallback();
     private Integer clientId;
 
-    @GetMapping("/connect")
-    public void connect() {
+    @PostMapping("/connect")
+    public ResponseEntity<String> connect() {
+
         Pointer userData = new Memory(1024);
 
         clientId = iidkClientLibrary.CreateClient("4", "10.8.126.1", 1030, userData);
-        System.out.println("1. Client created with id [" + clientId + "]");
+        String response = "1. Client created with id [" + clientId + "]";
 
         int msgHandlerRegistration = iidkClientLibrary.RegisterMessageHandler(clientId, IidkClientLibrary.ResponceType.ResponceTypeRaw, callback);
-        System.out.println("2. Message handler registration result: " + msgHandlerRegistration);
+        response = response + "\n2. Message handler registration result: " + msgHandlerRegistration;
 
         int connectionRes = iidkClientLibrary.Connect(clientId);
-        System.out.println("3. Connection result: " + connectionRes);
+        response = response + "\n3. Connection result: " + connectionRes;
+
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/message/send")
-    public void sendMsg() {
-        int messageRes = iidkClientLibrary.SendMsg(clientId, "CORE||GET_CONFIG|objtype<CAM>,objid<1>");
-        System.out.println("Message sent to clientId " + clientId);
+    @PostMapping("/message/send")
+    public ResponseEntity<String> sendMsg(@RequestBody(required = false) String msg) {
+        if(Objects.isNull(clientId)) {
+            return ResponseEntity.badRequest().body("Not connected. Need to connect.");
+        }
+        msg = Objects.isNull(msg) ? "CORE||GET_CONFIG|objtype<CAM>,objid<1>" : msg;
+        int messageRes = iidkClientLibrary.SendMsg(clientId, msg);
+        return ResponseEntity.ok("Message sent to clientId [" + clientId + "] is:\n" + msg);
     }
 
-    @GetMapping("/disconnect")
-    public void disconnect() {
-        iidkClientLibrary.Disconnect(clientId);
-        System.out.println("Disconnected");
+    @PostMapping("/disconnect")
+    public ResponseEntity<String> disconnect() {
+        if(!Objects.isNull(clientId)) {
+            iidkClientLibrary.Disconnect(clientId);
+        }
+        return ResponseEntity.ok("Disconnected");
     }
 }
